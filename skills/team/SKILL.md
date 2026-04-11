@@ -231,7 +231,7 @@ When team is linked to ralph, cancellation follows dependency order:
 
 ```bash
 # Create team session
-tmux new-session -d -s "omd-team-{slug}" -n "lead"
+tmux new-session -d -s "omd-team-{slug}" -x 200 -y 50 -n "lead"
 
 # Create worker panes
 tmux split-window -t "omd-team-{slug}" -h
@@ -302,7 +302,7 @@ User can watch all workers in real-time!
 
 1. Create tmux session:
    ```bash
-   tmux new-session -d -s "omd-team-{slug}" -n "lead"
+   tmux new-session -d -s "omd-team-{slug}" -x 200 -y 50 -n "lead"
    ```
 
 2. Create state directory:
@@ -736,3 +736,29 @@ Cleaned up tmux session.
 7. **Team slug must be valid** - Use lowercase letters, numbers, and hyphens only
 8. **Model costs** - Be mindful of model selection for workers; haiku is much cheaper than opus
 9. **CLI workers are independent** - Unlike Claude Code native teams, tmux workers don't have inter-agent messaging; coordination is via files only
+
+## Known Issues & Fixes
+
+### tmux pane size causes droid exec to fail silently
+
+**Problem:** When `tmux new-session -d` is called from a non-interactive shell (e.g., from within a droid session), tmux inherits a tiny terminal size (~40x12). Commands sent via `tmux send-keys` get truncated and `droid exec` fails silently.
+
+**Symptoms:**
+- Workers exit immediately with code 0 without producing output
+- `tmux capture-pane` shows truncated commands
+- Results directory stays empty
+
+**Fix:** Always create the session with explicit dimensions:
+```bash
+# REQUIRED: explicit -x and -y
+tmux new-session -d -s "omd-team-{slug}" -x 200 -y 50 -n "lead"
+
+# Enable aggressive resize for when user attaches
+tmux set-option -t "omd-team-{slug}" aggressive-resize on
+```
+
+**Fallback:** If tmux still fails, use background processes:
+```bash
+nohup droid exec --auto medium -f worker-prompt.md > worker.log 2>&1 &
+# Monitor with: tail -f worker-*.log
+```
