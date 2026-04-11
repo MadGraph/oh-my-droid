@@ -225,25 +225,99 @@ When team is linked to ralph, cancellation follows dependency order:
 - **Cancel triggered from Team context:** Clear Team state, mark Ralph as cancelled.
 - **Force cancel:** Clears both `team` and `ralph` state unconditionally.
 
-## tmux Integration
+## Terminal Integration
 
-### Session Management
+The team skill supports multiple terminal environments with automatic detection:
 
 ```bash
-# Create team session
-tmux new-session -d -s "omd-team-{slug}" -x 200 -y 50 -n "lead"
-
-# Create worker panes
-tmux split-window -t "omd-team-{slug}" -h
-tmux split-window -t "omd-team-{slug}" -v
-# ... repeat for N workers
-
-# Send commands to workers using droid exec
-tmux send-keys -t "omd-team-{slug}:0.1" \
-  "droid exec --auto medium --cwd $(pwd) -f .omd/team/{slug}/workers/worker-1-prompt.md" Enter
+# Detection order (like oh-my-claudecode)
+if [ -n "$CMUX_SURFACE_ID" ]; then
+  # CMUX (Factory terminal) - splits visible immediately
+  MODE="cmux"
+elif [ -n "$TMUX" ]; then
+  # tmux - split in current session
+  MODE="tmux"
+else
+  # Fallback - detached tmux + nohup background
+  MODE="detached"
+fi
 ```
 
-### Worker Pane Layout
+### CMUX Integration (Factory Terminal) - PREFERRED
+
+When running in Factory's CMUX terminal, workers spawn as **visible splits** in the current workspace:
+
+```bash
+# Create N stacked splits on the right
+W1=$(cmux new-split right | grep -o 'surface:[0-9]*')
+W2=$(cmux new-split down --surface $W1 | grep -o 'surface:[0-9]*')
+W3=$(cmux new-split down --surface $W2 | grep -o 'surface:[0-9]*')
+
+# Send droid exec to each worker
+cmux send --surface $W1 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-1-prompt.md\n"
+cmux send --surface $W2 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-2-prompt.md\n"
+cmux send --surface $W3 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-3-prompt.md\n"
+
+# Monitor workers
+cmux read-screen --surface $W1 --lines 20
+
+# Cleanup on completion
+cmux close-surface --surface $W1
+cmux close-surface --surface $W2
+cmux close-surface --surface $W3
+```
+
+**CMUX Worker Layout (3 workers):**
+```
+┌────────────────────┬───────────────────┐
+│                    │  WORKER-1 (W1)    │
+│                    ├───────────────────┤
+│       LEAD         │  WORKER-2 (W2)    │
+│    (this pane)     ├───────────────────┤
+│                    │  WORKER-3 (W3)    │
+└────────────────────┴───────────────────┘
+```
+
+**Advantages of CMUX mode:**
+- Workers visible immediately (no manual attach needed)
+- Real-time monitoring in the same window
+- Native Factory integration
+- `cmux read-screen` for programmatic monitoring
+
+### tmux Integration (CLI/External Terminal)
+
+When `$TMUX` is set (running inside tmux), split directly:
+
+```bash
+# Split in current tmux session
+tmux split-window -h
+tmux split-window -v
+tmux send-keys -t "0.1" "droid exec --auto medium -f worker-1-prompt.md" Enter
+```
+
+When tmux is not available, create a detached session:
+
+```bash
+# CRITICAL: Always pass -x and -y to avoid tiny panes
+tmux new-session -d -s "omd-team-{slug}" -x 200 -y 50 -n "lead"
+
+# Enable aggressive resize for when user attaches
+tmux set-option -t "omd-team-{slug}" aggressive-resize on
+
+# Create worker panes
+tmux split-window -t "omd-team-{slug}" -h -l 100
+tmux split-window -t "omd-team-{slug}:0.1" -v -l 25
+# ... repeat for N workers
+
+# Send commands to workers
+tmux send-keys -t "omd-team-{slug}:0.1" \
+  "droid exec --auto medium --cwd $(pwd) -f .omd/team/{slug}/workers/worker-1-prompt.md" Enter
+
+# User must attach manually:
+# tmux attach -t omd-team-{slug}
+```
+
+### Worker Pane Layout (tmux)
 
 For 3 workers:
 ```
@@ -281,13 +355,22 @@ droid exec --auto medium --model claude-haiku-4-5-20251001 "Worker 1: ..."
 - `--auto medium` - Development tasks (npm install, git commit local, build)
 - `--auto high` - Full operations (git push, deployments)
 
-### Attach to Monitor
+### Monitoring Workers
 
+**CMUX mode (Factory):** Workers are already visible - no action needed. Use `cmux read-screen` for programmatic access:
+```bash
+cmux read-screen --surface $WORKER1 --lines 20
+```
+
+**tmux mode:** Attach to the session:
 ```bash
 tmux attach -t "omd-team-{slug}"
 ```
 
-User can watch all workers in real-time!
+**Detached/background mode:** Tail the log files:
+```bash
+tail -f .omd/team/{slug}/workers/worker-*.log
+```
 
 ## Workflow
 
