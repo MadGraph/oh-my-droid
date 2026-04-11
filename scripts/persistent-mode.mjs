@@ -8,6 +8,11 @@
  * Supported modes: ralph, autopilot, ultrapilot, swarm, ultrawork, ecomode, ultraqa, pipeline
  */
 
+import { guardOmd } from './lib/omd-guard.mjs';
+
+// Guard: skip hook if OMD is not enabled (vanilla droid mode)
+await guardOmd();
+
 import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { homedir } from 'os';

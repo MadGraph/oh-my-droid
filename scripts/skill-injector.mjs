@@ -10,6 +10,11 @@
  * Enhancement in v3.5: Now uses RECURSIVE discovery (skills in subdirectories included)
  */
 
+import { guardOmd } from './lib/omd-guard.mjs';
+
+// Guard: skip hook if OMD is not enabled (vanilla droid mode)
+await guardOmd();
+
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'fs';
 import { join, basename } from 'path';
 import { homedir } from 'os';
