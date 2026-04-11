@@ -82,14 +82,18 @@ const userService = new UserService();
 ```
 
 #### 5. Hallucinated Patterns
-```typescript
-// BAD - AI Slop (API doesn't exist)
-import { useServerAction } from 'next/server-actions'; // Hallucinated import
-const result = await useServerAction(myAction); // Not a real pattern
 
-// GOOD - Verify actual API
-'use server';
-async function myAction() { /* ... */ }
+**Detection Method**: Hallucinated APIs are detected via **type checker**, not LLM judgment.
+
+Run `tsc --noEmit` (TypeScript), `pyright` (Python), or `go vet` (Go). Any unresolved import = hallucinated. The LLM reviews type checker failures, not guesses itself. This eliminates false positives from recently-deprecated or obscure-but-real APIs.
+
+```typescript
+// DETECTED BY tsc --noEmit (not LLM judgment)
+import { useServerAction } from 'next/server-actions'; // Error: Cannot find module
+const result = await useServerAction(myAction); // Error: 'useServerAction' not found
+
+// Type checker passes = not hallucinated (even if LLM doesn't recognize it)
+import { unstable_cache } from 'next/cache'; // Valid but obscure API
 ```
 
 ### Documentation Slop Patterns
@@ -155,7 +159,7 @@ Run detection across specified files:
 | Comment pollution | Medium | Yes |
 | Verbose conditionals | Low | Yes |
 | Redundant types | Low | Yes |
-| Hallucinated APIs | **Critical** | No - Manual |
+| Hallucinated APIs | **Critical** | No - Type checker flagged, manual fix |
 | Over-abstraction | Medium | No - Manual |
 | Filler phrases | Low | Yes |
 
@@ -182,11 +186,12 @@ Apply fixes automatically with diff preview:
 Flag for human review:
 
 ```
-[MANUAL REVIEW REQUIRED]
+[MANUAL REVIEW REQUIRED - from tsc --noEmit]
 File: src/api/external.ts
 Line: 45
 Issue: Hallucinated API - `fetchWithRetry` imported from 'next/fetch'
-Action: Verify if this API exists in your Next.js version, or implement manually
+tsc error: Cannot find module 'next/fetch' or its corresponding type declarations.
+Action: Implement manually or find correct import path
 ```
 
 ### Phase 4: Verification
@@ -244,11 +249,43 @@ Optional settings in `.omd/config.json`:
 }
 ```
 
+### Auto-Fix Behavior by Invocation Context
+
+**Principle**: Trust explicit user action, gate implicit automation.
+
+| Invocation | Default `autoFix` | Rationale |
+|------------|-------------------|-----------|
+| **Direct** (`/ai-slop-cleaner`) | `true` | User explicitly invoked; immediate feedback, rollback available |
+| **Chained** (from ralph, code-review, autopilot) | `false` | User never typed the command; scan/report only |
+
+**Direct invocation**: When user types `/ai-slop-cleaner` or `/slop`, they expect the command to do what it says. Preview-first would be friction. Changes are visible in git diff, rollback is one command away.
+
+**Chained invocation**: When another skill auto-calls this one (e.g., "After ralph → final polish"), the user receives changes they never approved. This path defaults to scan/report only. To apply fixes, the calling skill must pass explicit intent:
+
+```
+/ai-slop-cleaner --apply  # Explicit flag required in chained context
+```
+
+**Override**: Both contexts can override via flag:
+- `--apply` forces fixes even in chained context
+- `--scan-only` or `--dry-run` prevents fixes even in direct context
+
 ## Integration with Other Skills
 
-- **After ralph completes** → Run slop cleaner as final polish
-- **During code-review** → Slop detection included in review
-- **With autopilot** → Phase 4 (QA) can include slop cleaning
+When invoked by other skills (chained invocation), slop cleaner runs in **scan/report mode** by default. Apply fixes only with explicit user consent.
+
+| Skill | Integration Pattern |
+|-------|---------------------|
+| **ralph** | After completion, run `/ai-slop-cleaner` (scan only). If issues found, prompt: "Slop detected. Run `/ai-slop-cleaner --apply`?" |
+| **code-review** | Include slop scan in review output. No auto-fix. |
+| **autopilot** | Phase 4 (QA) runs slop scan. Fixes require explicit `--apply` flag in autopilot config. |
+
+**Example chained invocation:**
+```
+[RALPH COMPLETE - SLOP SCAN]
+Found 12 slop issues in 4 files.
+To apply fixes: /ai-slop-cleaner --apply
+```
 
 ## Anti-Patterns to Avoid
 
