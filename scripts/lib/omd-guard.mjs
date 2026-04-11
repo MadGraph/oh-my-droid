@@ -50,15 +50,8 @@ export function isOmdEnabled() {
  */
 export async function guardOmd() {
   if (!isOmdEnabled()) {
-    // Pass through stdin unchanged - hook has no effect
-    const stdin = await readStdin();
-    try {
-      const input = JSON.parse(stdin);
-      console.log(JSON.stringify(input));
-    } catch {
-      // If not JSON, just pass through raw
-      console.log(stdin);
-    }
+    // Drain stdin but output nothing - hook is completely silent
+    await readStdin();
     process.exit(0);
   }
 }
