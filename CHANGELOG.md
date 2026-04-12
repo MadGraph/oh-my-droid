@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Slop Cleaner Skill** - Detect and clean AI-generated slop patterns (comment pollution, verbose conditionals, redundant types, over-abstraction, filler phrases). Hallucinated API detection delegated to type checker (`tsc --noEmit`) instead of LLM judgment. Auto-fix behavior split by invocation context (direct vs chained).
 - **Plan → Deep Interview Delegation** - `/plan` now suggests delegating to `/deep-interview` when ambiguity is high across 3+ dimensions.
 - **Team CMUX Module** - TypeScript module (`src/team/`) for parallel worker management with CMUX/tmux support, atomic task claiming with TOCTOU guard, and safe JSON parsing.
-- **Vanilla Mode** - `droid` runs without OMD hooks (opt-in via `OMD_ENABLED=1`), `omd` wrapper enables full orchestration. Emergency override via `DISABLE_OMD=1`.
+
+### Removed
+
+- **Vanilla Mode** - Removed the `OMD_ENABLED`/`DISABLE_OMD` guard system. Factory CLI does not support conditional hook execution - hooks always run and their logs are always displayed, even when they exit silently. Until Factory adds `--no-hooks` or similar flag ([issue #936](https://github.com/Factory-AI/factory/issues/936)), vanilla mode is not achievable. To run without OMD, use `droid plugins disable oh-my-droid`.
 
 ### Changed
 

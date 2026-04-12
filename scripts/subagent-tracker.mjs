@@ -1,8 +1,5 @@
 #!/usr/bin/env node
-import { guardOmd } from './lib/omd-guard.mjs';
 
-// Guard: skip hook if OMD is not enabled (vanilla droid mode)
-await guardOmd();
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);

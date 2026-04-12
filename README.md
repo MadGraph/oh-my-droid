@@ -96,26 +96,21 @@ Optional shortcuts for power users. Natural language works fine without them.
 
 ---
 
-## Environment Variables
+## Disabling OMD
 
-### Vanilla Mode
-
-Run Factory Droid without OMD orchestration when needed:
+To run Factory Droid without OMD orchestration:
 
 ```bash
-# Disable all OMD hooks (vanilla Factory Droid)
-DISABLE_OMD=1 droid
-
-# Skip specific hooks only
-OMD_SKIP_HOOKS=keyword-detector,autopilot droid
+droid plugins disable oh-my-droid
 ```
 
-| Variable | Values | Effect |
-|----------|--------|--------|
-| `DISABLE_OMD` | `1` or `true` | Disables all OMD hooks, runs Factory Droid in vanilla mode |
-| `OMD_SKIP_HOOKS` | comma-separated list | Skips specific hooks (e.g., `keyword-detector,ralph,autopilot`) |
+To re-enable:
 
-**Available hooks:** `keyword-detector`, `stop-continuation`, `ralph`, `persistent-mode`, `session-start`, `session-end`, `pre-tool-use`, `post-tool-use`, `autopilot`, `subagent-start`, `subagent-stop`, `pre-compact`, `setup-init`, `setup-maintenance`, `permission-request`
+```bash
+droid plugins enable oh-my-droid
+```
+
+> **Note**: Environment variable-based vanilla mode (`OMD_ENABLED`, `DISABLE_OMD`) was removed because Factory CLI does not support conditional hook execution. Hooks always run and their logs are always displayed, even when they exit silently. See [Factory issue #936](https://github.com/Factory-AI/factory/issues/936) for the feature request.
 
 ---
 

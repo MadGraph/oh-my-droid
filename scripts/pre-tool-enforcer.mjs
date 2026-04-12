@@ -6,10 +6,7 @@
  * Cross-platform: Windows, macOS, Linux
  */
 
-import { guardOmd } from './lib/omd-guard.mjs';
 
-// Guard: skip hook if OMD is not enabled (vanilla droid mode)
-await guardOmd();
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';

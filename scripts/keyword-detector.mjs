@@ -23,10 +23,7 @@
  * 15. analyze: Analysis mode (restricted patterns)
  */
 
-import { guardOmd } from './lib/omd-guard.mjs';
 
-// Guard: skip hook if OMD is not enabled (vanilla droid mode)
-await guardOmd();
 
 import { writeFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
