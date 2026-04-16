@@ -554,12 +554,6 @@ export async function processHook(
   hookType: HookType,
   input: HookInput
 ): Promise<HookOutput> {
-  // Environment kill-switches for plugin coexistence (inspired by oh-my-claudecode)
-  // Set DISABLE_OMD=1 or DISABLE_OMD=true to run Factory Droid in vanilla mode
-  if (process.env.DISABLE_OMD === '1' || process.env.DISABLE_OMD === 'true') {
-    return { continue: true };
-  }
-
   // Optional: Skip specific hooks via OMD_SKIP_HOOKS=hook1,hook2
   const skipHooks = getSkipHooks();
   if (skipHooks.includes(hookType)) {
