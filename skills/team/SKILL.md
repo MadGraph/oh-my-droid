@@ -227,75 +227,9 @@ When team is linked to ralph, cancellation follows dependency order:
 
 ## Terminal Integration
 
-The team skill supports multiple terminal environments with automatic detection:
+The team skill uses **tmux** for worker coordination. Workers run as `droid exec` processes in tmux panes.
 
-```bash
-# Detection order (like oh-my-claudecode)
-if [ -n "$CMUX_SURFACE_ID" ]; then
-  # CMUX (Factory terminal) - splits visible immediately
-  MODE="cmux"
-elif [ -n "$TMUX" ]; then
-  # tmux - split in current session
-  MODE="tmux"
-else
-  # Fallback - detached tmux + nohup background
-  MODE="detached"
-fi
-```
-
-### CMUX Integration (Factory Terminal) - PREFERRED
-
-When running in Factory's CMUX terminal, workers spawn as **visible splits** in the current workspace:
-
-```bash
-# Create N stacked splits on the right
-W1=$(cmux new-split right | grep -o 'surface:[0-9]*')
-W2=$(cmux new-split down --surface $W1 | grep -o 'surface:[0-9]*')
-W3=$(cmux new-split down --surface $W2 | grep -o 'surface:[0-9]*')
-
-# Send droid exec to each worker
-cmux send --surface $W1 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-1-prompt.md\n"
-cmux send --surface $W2 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-2-prompt.md\n"
-cmux send --surface $W3 "droid exec --auto medium -f .omd/team/{slug}/workers/worker-3-prompt.md\n"
-
-# Monitor workers
-cmux read-screen --surface $W1 --lines 20
-
-# Cleanup on completion
-cmux close-surface --surface $W1
-cmux close-surface --surface $W2
-cmux close-surface --surface $W3
-```
-
-**CMUX Worker Layout (3 workers):**
-```
-┌────────────────────┬───────────────────┐
-│                    │  WORKER-1 (W1)    │
-│                    ├───────────────────┤
-│       LEAD         │  WORKER-2 (W2)    │
-│    (this pane)     ├───────────────────┤
-│                    │  WORKER-3 (W3)    │
-└────────────────────┴───────────────────┘
-```
-
-**Advantages of CMUX mode:**
-- Workers visible immediately (no manual attach needed)
-- Real-time monitoring in the same window
-- Native Factory integration
-- `cmux read-screen` for programmatic monitoring
-
-### tmux Integration (CLI/External Terminal)
-
-When `$TMUX` is set (running inside tmux), split directly:
-
-```bash
-# Split in current tmux session
-tmux split-window -h
-tmux split-window -v
-tmux send-keys -t "0.1" "droid exec --auto medium -f worker-1-prompt.md" Enter
-```
-
-When tmux is not available, create a detached session:
+### tmux Session Setup
 
 ```bash
 # CRITICAL: Always pass -x and -y to avoid tiny panes
@@ -356,11 +290,6 @@ droid exec --auto medium --model claude-haiku-4-5-20251001 "Worker 1: ..."
 - `--auto high` - Full operations (git push, deployments)
 
 ### Monitoring Workers
-
-**CMUX mode (Factory):** Workers are already visible - no action needed. Use `cmux read-screen` for programmatic access:
-```bash
-cmux read-screen --surface $WORKER1 --lines 20
-```
 
 **tmux mode:** Attach to the session:
 ```bash

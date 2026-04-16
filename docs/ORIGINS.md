@@ -66,7 +66,7 @@ In OMX/OMC, `$ralplan` is an alias for `$plan --consensus`. The workflow uses RA
 
 ### Team (Coordinated Agents)
 
-N workers on a shared task list. In OMD, this uses CMUX (Factory's native terminal API) for visible splits, with tmux as fallback.
+N workers on a shared task list. In OMD, this uses tmux for parallel worker coordination.
 
 ## Differences from OMC
 
@@ -74,7 +74,7 @@ See [DIFF_OH_MY_CLAUDECODE.md](./DIFF_OH_MY_CLAUDECODE.md) for detailed technica
 
 Key adaptations for Factory Droid:
 - Hooks use `.mjs` scripts (Factory's extension system)
-- CMUX integration for visible worker splits (Factory-native)
+- tmux-based parallel worker coordination
 - Droids replace Agents (Factory terminology)
 - Plugin marketplace distribution
 

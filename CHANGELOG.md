@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deep Interview Skill** - Socratic clarification workflow with 6-dimension ambiguity scoring (scope, technical, success, constraints, risks, timeline). Includes challenge modes: Devil's Advocate, Scope Creep Detector, Hidden Dependency Probe, Failure Mode Analysis. Designed as a requirements firewall before planning.
 - **AI Slop Cleaner Skill** - Detect and clean AI-generated slop patterns (comment pollution, verbose conditionals, redundant types, over-abstraction, filler phrases). Hallucinated API detection delegated to type checker (`tsc --noEmit`) instead of LLM judgment. Auto-fix behavior split by invocation context (direct vs chained).
 - **Plan → Deep Interview Delegation** - `/plan` now suggests delegating to `/deep-interview` when ambiguity is high across 3+ dimensions.
-- **Team CMUX Module** - TypeScript module (`src/team/`) for parallel worker management with CMUX/tmux support, atomic task claiming with TOCTOU guard, and safe JSON parsing.
+- **Team Skill** - tmux-based parallel worker coordination with staged pipeline (team-plan → team-prd → team-exec → team-verify → team-fix).
 
 ### Removed
 
